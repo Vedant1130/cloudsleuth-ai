@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
+
 import resourceRoutes from "./routes/resourceRoutes.js";
+import costRoutes from "./routes/costRoutes.js";
 
 const app = express();
 
@@ -11,7 +13,9 @@ app.use(
 );
 
 app.use(express.json());
+
 app.use("/api/resources", resourceRoutes);
+app.use("/api/costs", costRoutes);
 
 app.get("/", (req, res) => {
   res.json({
