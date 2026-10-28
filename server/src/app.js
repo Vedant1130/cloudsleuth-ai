@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import resourceRoutes from "./routes/resourceRoutes.js";
 
 const app = express();
 
@@ -10,6 +11,7 @@ app.use(
 );
 
 app.use(express.json());
+app.use("/api/resources", resourceRoutes);
 
 app.get("/", (req, res) => {
   res.json({
