@@ -19,10 +19,12 @@ import {
   Legend,
 } from "recharts";
 
+import { formatCurrency } from "../utils/formatCurrency";
+
 const metrics = [
   {
     label: "Cloud Spend",
-    value: "$12,840",
+    value: formatCurrency(12840),
     change: "+8.2%",
     positive: false,
     icon: Wallet,
@@ -46,7 +48,7 @@ const metrics = [
   },
   {
     label: "Potential Savings",
-    value: "$2,460",
+    value: formatCurrency(2460),
     change: "Monthly estimate",
     positive: true,
     icon: BrainCircuit,
@@ -174,7 +176,7 @@ export default function Dashboard() {
             <div className="rounded-xl bg-slate-950/70 p-5">
               <p className="text-sm text-slate-400">Total cloud spend</p>
               <p className="mt-2 text-2xl font-semibold text-white">
-                $3,240.50
+                {formatCurrency(3240.5)}
               </p>
               <p className="mt-2 text-xs text-rose-300">
                 ↑ 12.4% vs previous week
@@ -189,84 +191,93 @@ export default function Dashboard() {
             </div>
           </div>
 
-          
-<div className="mt-6 h-72 w-full">
-  <ResponsiveContainer width="100%" height="100%">
-    <AreaChart
-      data={analyticsData}
-      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-    >
-      <defs>
-        <linearGradient id="spendGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3} />
-          <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
-        </linearGradient>
-      </defs>
+          <div className="mt-6 h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={analyticsData}
+                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient
+                    id="spendGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop offset="5%" stopColor="#22d3ee" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#22d3ee" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
 
-      <CartesianGrid
-        stroke="#1e293b"
-        strokeDasharray="3 3"
-        vertical={false}
-      />
+                <CartesianGrid
+                  stroke="#1e293b"
+                  strokeDasharray="3 3"
+                  vertical={false}
+                />
 
-      <XAxis
-        dataKey="day"
-        stroke="#64748b"
-        tickLine={false}
-        axisLine={false}
-      />
+                <XAxis
+                  dataKey="day"
+                  stroke="#64748b"
+                  tickLine={false}
+                  axisLine={false}
+                />
 
-      <YAxis
-        yAxisId="spend"
-        stroke="#64748b"
-        tickLine={false}
-        axisLine={false}
-        tickFormatter={(value) => `$${value}`}
-      />
+                <YAxis
+                  yAxisId="spend"
+                  stroke="#64748b"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => formatCurrency(value)}
+                />
 
-      <YAxis
-        yAxisId="incidents"
-        orientation="right"
-        stroke="#64748b"
-        tickLine={false}
-        axisLine={false}
-        allowDecimals={false}
-      />
+                <YAxis
+                  yAxisId="incidents"
+                  orientation="right"
+                  stroke="#64748b"
+                  tickLine={false}
+                  axisLine={false}
+                  allowDecimals={false}
+                />
 
-      <Tooltip
-        contentStyle={{
-          backgroundColor: "#0f172a",
-          border: "1px solid #334155",
-          borderRadius: "12px",
-          color: "#f8fafc",
-        }}
-      />
+                <Tooltip
+                  formatter={(value, name) =>
+                    name === "Cloud Spend (₹)"
+                      ? [formatCurrency(value), name]
+                      : [value, name]
+                  }
+                  contentStyle={{
+                    backgroundColor: "#0f172a",
+                    border: "1px solid #334155",
+                    borderRadius: "12px",
+                    color: "#f8fafc",
+                  }}
+                />
 
-      <Legend />
+                <Legend />
 
-      <Area
-        yAxisId="spend"
-        type="monotone"
-        dataKey="spend"
-        name="Cloud Spend ($)"
-        stroke="#22d3ee"
-        strokeWidth={2}
-        fill="url(#spendGradient)"
-      />
+                <Area
+                  yAxisId="spend"
+                  type="monotone"
+                  dataKey="spend"
+                  name="Cloud Spend (₹)"
+                  stroke="#22d3ee"
+                  strokeWidth={2}
+                  fill="url(#spendGradient)"
+                />
 
-      <Area
-        yAxisId="incidents"
-        type="monotone"
-        dataKey="incidents"
-        name="Incidents"
-        stroke="#a78bfa"
-        strokeWidth={2}
-        fill="none"
-      />
-    </AreaChart>
-  </ResponsiveContainer>
-</div>
-
+                <Area
+                  yAxisId="incidents"
+                  type="monotone"
+                  dataKey="incidents"
+                  name="Incidents"
+                  stroke="#a78bfa"
+                  strokeWidth={2}
+                  fill="none"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </article>
 
         <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
