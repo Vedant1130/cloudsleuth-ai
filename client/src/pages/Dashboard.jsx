@@ -412,7 +412,7 @@ export default function Dashboard() {
         ))}
       </section>
 
-      <section className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+      <section className="grid grid-cols-1 items-stretch gap-6 xl:grid-cols-3">
         <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 xl:col-span-2">
           <div className="flex items-center justify-between gap-3">
             <div>
@@ -542,11 +542,13 @@ export default function Dashboard() {
           error={costError}
         />
 
-        <TopCostResources
-          resources={costOverview?.topResources ?? []}
-          loading={costLoading}
-          error={costError}
-        />
+        <div className="xl:col-span-2">
+          <TopCostResources
+            resources={costOverview?.topResources ?? []}
+            loading={costLoading}
+            error={costError}
+          />
+        </div>
 
         <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
           <div className="flex items-center justify-between">
@@ -592,16 +594,20 @@ export default function Dashboard() {
       </section>
 
       <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-        <div className="mb-5">
-          <h2 className="font-semibold text-white">
-            Registered Cloud Resources
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">Live data from MongoDB</p>
+        <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="font-semibold text-white">
+              Registered Cloud Resources
+            </h2>
+            <p className="mt-1 text-sm text-slate-500">
+              Live data from MongoDB
+            </p>
+          </div>
 
           <button
             type="button"
             onClick={() => setIsResourceModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 sm:self-auto"
           >
             <Plus size={17} />
             Register Resource
@@ -621,7 +627,7 @@ export default function Dashboard() {
             {cloudResources.map((resource) => (
               <div
                 key={resource._id}
-                className="flex flex-col justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-4 sm:flex-row sm:items-center"
+                className="flex flex-col justify-between gap-2 rounded-xl border border-slate-800 bg-slate-950/60 p-3.5 transition-colors hover:border-slate-700 sm:flex-row sm:items-center"
               >
                 <div>
                   <p className="font-medium text-white">{resource.name}</p>
@@ -654,10 +660,10 @@ export default function Dashboard() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="resource-modal-title"
-            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl sm:p-7"
+            className="flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-700/80 bg-slate-900 shadow-2xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="mb-6 flex items-start justify-between gap-4">
+            <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-800 px-5 py-5 sm:px-7">
               <div>
                 <h2
                   id="resource-modal-title"
@@ -681,13 +687,16 @@ export default function Dashboard() {
               </button>
             </div>
 
-            <ResourceForm
-              onResourceCreated={() => {
-                setIsResourceModalOpen(false);
-                fetchCostOverview();
-                fetchCloudResources();
-              }}
-            />
+            <div className="overflow-y-auto px-5 py-5 sm:px-7">
+              <ResourceForm
+                onCancel={() => setIsResourceModalOpen(false)}
+                onResourceCreated={() => {
+                  setIsResourceModalOpen(false);
+                  fetchCostOverview();
+                  fetchCloudResources();
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

@@ -1,43 +1,85 @@
 
-import { Bell, Search, ChevronDown } from "lucide-react";
+import {
+  Bell,
+  Search,
+  ChevronDown,
+  Command,
+  Activity,
+} from "lucide-react";
 
 export default function Topbar() {
   return (
-    <header className="flex min-h-20 items-center justify-between gap-4 border-b border-slate-800 bg-slate-950/80 px-5 md:px-8">
-      <div>
-        <p className="text-sm text-slate-500">Workspace / Overview</p>
-        <h2 className="mt-1 text-lg font-semibold text-white">
-          Cloud Operations
-        </h2>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="hidden items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 sm:flex">
-          <Search size={16} className="text-slate-500" />
-          <input
-            type="search"
-            placeholder="Search anything..."
-            className="w-36 bg-transparent text-sm text-white outline-none placeholder:text-slate-600"
-          />
-          <kbd className="rounded border border-slate-700 px-1.5 text-xs text-slate-500">
-            ⌘ K
-          </kbd>
+    <header className="sticky top-0 z-30 flex min-h-[84px] items-center justify-between gap-4 border-b border-slate-800/80 bg-slate-950/90 px-5 backdrop-blur-xl md:px-8">
+      {/* Page context */}
+      <div className="min-w-0">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span>Workspace</span>
+          <span className="text-slate-700">/</span>
+          <span className="text-slate-400">Overview</span>
         </div>
 
+        <div className="mt-1.5 flex items-center gap-2.5">
+          <h2 className="truncate text-lg font-semibold tracking-tight text-white sm:text-xl">
+            Cloud Operations
+          </h2>
+          <span className="hidden items-center gap-1.5 rounded-full border border-emerald-400/15 bg-emerald-400/[0.07] px-2 py-1 text-[10px] font-medium text-emerald-300 sm:inline-flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Workspace active
+          </span>
+        </div>
+      </div>
+
+      {/* Header actions */}
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {/* Search */}
+        <label className="hidden h-10 items-center gap-2.5 rounded-xl border border-slate-800 bg-slate-900/70 px-3 transition focus-within:border-cyan-400/40 focus-within:ring-2 focus-within:ring-cyan-400/10 sm:flex">
+          <Search size={16} className="shrink-0 text-slate-500" />
+
+          <input
+            type="search"
+            aria-label="Search"
+            placeholder="Search anything..."
+            className="w-28 bg-transparent text-sm text-slate-200 outline-none placeholder:text-slate-600 md:w-36 xl:w-44"
+          />
+
+          <kbd className="flex items-center gap-0.5 rounded-md border border-slate-700/80 bg-slate-950 px-1.5 py-1 text-[10px] text-slate-500">
+            <Command size={10} />
+            K
+          </kbd>
+        </label>
+
+        {/* Notifications */}
         <button
+          type="button"
           aria-label="Notifications"
-          className="relative rounded-xl border border-slate-800 p-2.5 text-slate-400 hover:bg-slate-900 hover:text-white"
+          className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-slate-800 bg-slate-900/50 text-slate-400 transition hover:border-slate-700 hover:bg-slate-800 hover:text-white"
         >
-          <Bell size={18} />
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-cyan-400" />
+          <Bell size={18} strokeWidth={1.8} />
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full border-2 border-slate-950 bg-cyan-400" />
         </button>
 
-        <button className="flex items-center gap-2 rounded-xl border border-slate-800 p-2 text-sm text-slate-300">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-400/10 font-semibold text-cyan-300">
+        {/* Workspace menu */}
+        <button
+          type="button"
+          className="flex h-10 items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/50 px-2 transition hover:border-slate-700 hover:bg-slate-800 sm:gap-2.5 sm:px-2.5"
+        >
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-cyan-400/15 bg-cyan-400/10 text-xs font-bold text-cyan-300">
             VS
           </span>
-          <span className="hidden md:block">My Workspace</span>
-          <ChevronDown size={15} className="hidden md:block" />
+
+          <span className="hidden text-left sm:block">
+            <span className="block text-xs font-medium text-slate-200">
+              My Workspace
+            </span>
+            <span className="mt-0.5 block text-[10px] text-slate-500">
+              Cloud Operations
+            </span>
+          </span>
+
+          <ChevronDown
+            size={14}
+            className="hidden text-slate-500 sm:block"
+          />
         </button>
       </div>
     </header>
