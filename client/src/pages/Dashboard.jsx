@@ -6,6 +6,8 @@ import {
   ShieldAlert,
   CheckCircle2,
   BrainCircuit,
+  Plus,
+  X,
 } from "lucide-react";
 
 import {
@@ -27,6 +29,8 @@ import { useEffect, useState } from "react";
 import { formatCurrency } from "../utils/formatCurrency";
 import { getCostOverview } from "../services/costService";
 import { getCloudResources } from "../services/cloudResourceService";
+
+import ResourceForm from "../components/dashboard/ResourceForm";
 
 const metrics = [
   {
@@ -332,46 +336,48 @@ export default function Dashboard() {
   const [cloudResources, setCloudResources] = useState([]);
   const [resourcesLoading, setResourcesLoading] = useState(true);
   const [resourcesError, setResourcesError] = useState("");
+  const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchCostOverview = async () => {
-      try {
-        const response = await getCostOverview();
+  const fetchCostOverview = async () => {
+    try {
+      setCostError("");
 
-        if (response.success) {
-          setCostOverview(response.data);
-        } else {
-          setCostError("Unable to load cloud costs.");
-        }
-      } catch (error) {
-        console.error("Failed to fetch cost overview:", error);
+      const response = await getCostOverview();
+
+      if (response.success) {
+        setCostOverview(response.data);
+      } else {
         setCostError("Unable to load cloud costs.");
-      } finally {
-        setCostLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch cost overview:", error);
+      setCostError("Unable to load cloud costs.");
+    } finally {
+      setCostLoading(false);
+    }
+  };
 
-    fetchCostOverview();
-  }, []);
+  const fetchCloudResources = async () => {
+    try {
+      setResourcesError("");
+
+      const response = await getCloudResources();
+
+      if (response.success) {
+        setCloudResources(response.data);
+      } else {
+        setResourcesError("Unable to load cloud resources.");
+      }
+    } catch (error) {
+      console.error("Failed to fetch cloud resources:", error);
+      setResourcesError("Unable to load cloud resources.");
+    } finally {
+      setResourcesLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCloudResources = async () => {
-      try {
-        const response = await getCloudResources();
-
-        if (response.success) {
-          setCloudResources(response.data);
-        } else {
-          setResourcesError("Unable to load cloud resources.");
-        }
-      } catch (error) {
-        console.error("Failed to fetch cloud resources:", error);
-        setResourcesError("Unable to load cloud resources.");
-      } finally {
-        setResourcesLoading(false);
-      }
-    };
-
+    fetchCostOverview();
     fetchCloudResources();
   }, []);
 
@@ -591,6 +597,15 @@ export default function Dashboard() {
             Registered Cloud Resources
           </h2>
           <p className="mt-1 text-sm text-slate-500">Live data from MongoDB</p>
+
+          <button
+            type="button"
+            onClick={() => setIsResourceModalOpen(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+          >
+            <Plus size={17} />
+            Register Resource
+          </button>
         </div>
 
         {resourcesLoading ? (
@@ -629,6 +644,53 @@ export default function Dashboard() {
           </div>
         )}
       </section>
+
+      {isResourceModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          onClick={() => setIsResourceModalOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="resource-modal-title"
+            className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-slate-700 bg-slate-900 p-5 shadow-2xl sm:p-7"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <div>
+                <h2
+                  id="resource-modal-title"
+                  className="text-xl font-semibold text-white"
+                >
+                  Register Cloud Resource
+                </h2>
+
+                <p className="mt-2 text-sm text-slate-400">
+                  Add a resource to your CloudSleuth inventory.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                aria-label="Close registration form"
+                onClick={() => setIsResourceModalOpen(false)}
+                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <ResourceForm
+              onResourceCreated={() => {
+                setIsResourceModalOpen(false);
+                fetchCostOverview();
+                fetchCloudResources();
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
