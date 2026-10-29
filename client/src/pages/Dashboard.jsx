@@ -17,6 +17,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 
 import { useEffect, useState } from "react";
@@ -44,8 +47,8 @@ const metrics = [
   },
   {
     label: "Services Healthy",
-    value: "24/26",
-    change: "92.3% healthy",
+    value: "resourceHealth",
+    change: "resourceHealth",
     positive: true,
     icon: Activity,
     color: "emerald",
@@ -92,6 +95,14 @@ const colorClasses = {
   amber: "bg-amber-400/10 text-amber-300",
 };
 
+const providerColors = [
+  "#22d3ee", // Cyan
+  "#a78bfa", // Violet
+  "#34d399", // Emerald
+  "#fbbf24", // Amber
+  "#fb7185", // Rose
+];
+
 const analyticsData = [
   { day: "Thu", spend: 420, incidents: 2 },
   { day: "Fri", spend: 510, incidents: 1 },
@@ -122,7 +133,13 @@ function MetricCard({ metric, costOverview, costLoading, costError }) {
             : costError
               ? "Unavailable"
               : formatCurrency(costOverview?.summary?.totalMonthlyCost ?? 0)
-          : metric.value}
+          : metric.value === "resourceHealth"
+            ? costLoading
+              ? "Loading..."
+              : costError
+                ? "Unavailable"
+                : `${costOverview?.summary?.runningResources ?? 0}/${costOverview?.summary?.resourceCount ?? 0}`
+            : metric.value}
       </p>
 
       <div className="mt-3 flex items-center gap-1.5 text-xs">
@@ -133,9 +150,176 @@ function MetricCard({ metric, costOverview, costLoading, costError }) {
         <span
           className={metric.positive ? "text-emerald-400" : "text-rose-400"}
         >
-          {metric.change}
+          {metric.change === "resourceHealth"
+            ? costLoading
+              ? "Checking resource health..."
+              : costError
+                ? "Health unavailable"
+                : `${
+                    costOverview?.summary?.resourceCount
+                      ? Math.round(
+                          (costOverview.summary.runningResources /
+                            costOverview.summary.resourceCount) *
+                            100,
+                        )
+                      : 0
+                  }% of resources running`
+            : metric.change}
         </span>
       </div>
+    </article>
+  );
+}
+
+function ProviderCostBreakdown({ providers, loading, error }) {
+  const chartData = (providers || []).filter(
+    (provider) => provider.totalMonthlyCost > 0,
+  );
+
+  return (
+    <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+      <h2 className="font-semibold text-white">Provider Cost Breakdown</h2>
+      <p className="mt-1 text-sm text-slate-500">
+        Monthly cost by cloud provider
+      </p>
+
+      {loading ? (
+        <p className="mt-6 text-sm text-slate-400">Loading provider costs...</p>
+      ) : error ? (
+        <p className="mt-6 text-sm text-rose-400">
+          Provider costs unavailable.
+        </p>
+      ) : chartData.length === 0 ? (
+        <p className="mt-6 text-sm text-slate-400">
+          No provider costs available yet.
+        </p>
+      ) : (
+        <>
+          <div className="relative mt-4 h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="totalMonthlyCost"
+                  nameKey="provider"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={55}
+                  outerRadius={82}
+                  paddingAngle={3}
+                >
+                  {chartData.map((provider, index) => (
+                    <Cell
+                      key={provider.provider}
+                      fill={providerColors[index % providerColors.length]}
+                    />
+                  ))}
+                </Pie>
+
+                <Tooltip
+                  formatter={(value) => [formatCurrency(value), "Monthly cost"]}
+                  contentStyle={{
+                    backgroundColor: "#0f172a",
+                    border: "1px solid #334155",
+                    borderRadius: "12px",
+                    color: "#f8fafc",
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-xs text-slate-400">Total / month</span>
+              <span className="text-base font-semibold text-white">
+                {formatCurrency(
+                  chartData.reduce(
+                    (total, provider) => total + provider.totalMonthlyCost,
+                    0,
+                  ),
+                )}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3 space-y-3">
+            {chartData.map((provider, index) => (
+              <div
+                key={provider.provider}
+                className="flex items-center justify-between gap-3"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span
+                    className="h-3 w-3 shrink-0 rounded-full"
+                    style={{
+                      backgroundColor:
+                        providerColors[index % providerColors.length],
+                    }}
+                  />
+                  <span className="truncate text-sm text-slate-300">
+                    {provider.provider}
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    ({provider.resourceCount})
+                  </span>
+                </div>
+
+                <span className="text-sm font-medium text-white">
+                  {formatCurrency(provider.totalMonthlyCost)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </article>
+  );
+}
+
+function TopCostResources({ resources, loading, error }) {
+  return (
+    <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+      <div className="mb-5">
+        <h2 className="font-semibold text-white">Top Cost Resources</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Highest monthly costs among registered resources
+        </p>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-slate-400">Loading cost resources...</p>
+      ) : error ? (
+        <p className="text-sm text-rose-400">Cost resources unavailable.</p>
+      ) : !resources?.length ? (
+        <p className="text-sm text-slate-400">No registered resources found.</p>
+      ) : (
+        <div className="space-y-3">
+          {resources.map((resource) => (
+            <div
+              key={resource._id || resource.resourceId}
+              className="flex flex-col justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-4 sm:flex-row sm:items-center"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium text-white">
+                  {resource.name}
+                </p>
+                <p className="mt-1 text-sm text-slate-400">
+                  {resource.provider} · {resource.resourceType}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {resource.region} · {resource.status}
+                </p>
+              </div>
+
+              <div className="shrink-0 sm:text-right">
+                <p className="font-semibold text-cyan-300">
+                  {formatCurrency(resource.monthlyCost)}
+                </p>
+                <p className="text-xs text-slate-500">per month</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </article>
   );
 }
@@ -345,6 +529,18 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </div>
         </article>
+
+        <ProviderCostBreakdown
+          providers={costOverview?.providers ?? []}
+          loading={costLoading}
+          error={costError}
+        />
+
+        <TopCostResources
+          resources={costOverview?.topResources ?? []}
+          loading={costLoading}
+          error={costError}
+        />
 
         <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
           <div className="flex items-center justify-between">
