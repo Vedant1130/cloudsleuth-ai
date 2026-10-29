@@ -19,16 +19,20 @@ import {
   Legend,
 } from "recharts";
 
+import { useEffect, useState } from "react";
+
 import { formatCurrency } from "../utils/formatCurrency";
+import { getCostOverview } from "../services/costService";
+import { getCloudResources } from "../services/cloudResourceService";
 
 const metrics = [
   {
     label: "Cloud Spend",
-    value: formatCurrency(12840),
-    change: "+8.2%",
-    positive: false,
+    change: "Registered resources",
+    positive: true,
     icon: Wallet,
     color: "cyan",
+    type: "cloudSpend",
   },
   {
     label: "Active Incidents",
@@ -49,7 +53,7 @@ const metrics = [
   {
     label: "Potential Savings",
     value: formatCurrency(2460),
-    change: "Monthly estimate",
+    change: "Sample estimate",
     positive: true,
     icon: BrainCircuit,
     color: "violet",
@@ -98,7 +102,7 @@ const analyticsData = [
   { day: "Wed", spend: 720, incidents: 3 },
 ];
 
-function MetricCard({ metric }) {
+function MetricCard({ metric, costOverview, costLoading, costError }) {
   const Icon = metric.icon;
   const TrendIcon = metric.positive ? ArrowDownRight : ArrowUpRight;
 
@@ -112,7 +116,13 @@ function MetricCard({ metric }) {
       </div>
 
       <p className="mt-5 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
-        {metric.value}
+        {metric.type === "cloudSpend"
+          ? costLoading
+            ? "Loading..."
+            : costError
+              ? "Unavailable"
+              : formatCurrency(costOverview?.summary?.totalMonthlyCost ?? 0)
+          : metric.value}
       </p>
 
       <div className="mt-3 flex items-center gap-1.5 text-xs">
@@ -131,6 +141,56 @@ function MetricCard({ metric }) {
 }
 
 export default function Dashboard() {
+  const [costOverview, setCostOverview] = useState(null);
+  const [costLoading, setCostLoading] = useState(true);
+  const [costError, setCostError] = useState("");
+
+  const [cloudResources, setCloudResources] = useState([]);
+  const [resourcesLoading, setResourcesLoading] = useState(true);
+  const [resourcesError, setResourcesError] = useState("");
+
+  useEffect(() => {
+    const fetchCostOverview = async () => {
+      try {
+        const response = await getCostOverview();
+
+        if (response.success) {
+          setCostOverview(response.data);
+        } else {
+          setCostError("Unable to load cloud costs.");
+        }
+      } catch (error) {
+        console.error("Failed to fetch cost overview:", error);
+        setCostError("Unable to load cloud costs.");
+      } finally {
+        setCostLoading(false);
+      }
+    };
+
+    fetchCostOverview();
+  }, []);
+
+  useEffect(() => {
+    const fetchCloudResources = async () => {
+      try {
+        const response = await getCloudResources();
+
+        if (response.success) {
+          setCloudResources(response.data);
+        } else {
+          setResourcesError("Unable to load cloud resources.");
+        }
+      } catch (error) {
+        console.error("Failed to fetch cloud resources:", error);
+        setResourcesError("Unable to load cloud resources.");
+      } finally {
+        setResourcesLoading(false);
+      }
+    };
+
+    fetchCloudResources();
+  }, []);
+
   return (
     <div className="mx-auto max-w-[1600px] space-y-8 p-5 md:p-8">
       <section className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -152,7 +212,13 @@ export default function Dashboard() {
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
-          <MetricCard key={metric.label} metric={metric} />
+          <MetricCard
+            key={metric.label}
+            metric={metric}
+            costOverview={costOverview}
+            costLoading={costLoading}
+            costError={costError}
+          />
         ))}
       </section>
 
@@ -321,6 +387,51 @@ export default function Dashboard() {
             Sample dashboard data
           </div>
         </article>
+      </section>
+
+      <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+        <div className="mb-5">
+          <h2 className="font-semibold text-white">
+            Registered Cloud Resources
+          </h2>
+          <p className="mt-1 text-sm text-slate-500">Live data from MongoDB</p>
+        </div>
+
+        {resourcesLoading ? (
+          <p className="text-sm text-slate-400">Loading cloud resources...</p>
+        ) : resourcesError ? (
+          <p className="text-sm text-rose-400">{resourcesError}</p>
+        ) : cloudResources.length === 0 ? (
+          <p className="text-sm text-slate-400">
+            No cloud resources registered yet.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {cloudResources.map((resource) => (
+              <div
+                key={resource._id}
+                className="flex flex-col justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-4 sm:flex-row sm:items-center"
+              >
+                <div>
+                  <p className="font-medium text-white">{resource.name}</p>
+                  <p className="mt-1 text-sm text-slate-400">
+                    {resource.provider} · {resource.resourceType} ·{" "}
+                    {resource.region}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <span className="text-sm text-slate-300">
+                    {resource.status}
+                  </span>
+                  <span className="font-semibold text-cyan-300">
+                    {formatCurrency(resource.monthlyCost)}/mo
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
