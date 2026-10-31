@@ -3,6 +3,7 @@ import cors from "cors";
 
 import resourceRoutes from "./routes/resourceRoutes.js";
 import costRoutes from "./routes/costRoutes.js";
+import investigationRoutes from "./routes/investigationRoutes.js";
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 
 app.use("/api/resources", resourceRoutes);
 app.use("/api/costs", costRoutes);
+app.use("/api/investigations", investigationRoutes);
 
 app.get("/", (req, res) => {
   res.json({
