@@ -8,6 +8,7 @@ import {
   Cloud,
   ChevronRight,
   CircleHelp,
+  X,
 } from "lucide-react";
 
 const navigation = [
@@ -17,23 +18,37 @@ const navigation = [
   { label: "AI Investigator", icon: BrainCircuit },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }) {
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-slate-800/80 bg-slate-950 text-slate-300">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-800/80 bg-slate-950 text-slate-300">
       {/* Brand */}
-      <div className="flex h-[84px] items-center gap-3 border-b border-slate-800/80 px-5">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300 shadow-lg shadow-cyan-950/20">
-          <Cloud size={24} strokeWidth={2.2} />
+      <div className="flex h-[84px] shrink-0 items-center justify-between gap-3 border-b border-slate-800/80 px-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300 shadow-lg shadow-cyan-950/20">
+            <Cloud size={24} strokeWidth={2.2} />
+          </div>
+
+          <div className="min-w-0">
+            <h1 className="text-[15px] font-bold tracking-tight text-white">
+              CloudSleuth
+            </h1>
+            <p className="mt-0.5 text-xs tracking-wide text-slate-500">
+              AI Operations
+            </p>
+          </div>
         </div>
 
-        <div className="min-w-0">
-          <h1 className="text-[15px] font-bold tracking-tight text-white">
-            CloudSleuth
-          </h1>
-          <p className="mt-0.5 text-xs tracking-wide text-slate-500">
-            AI Operations
-          </p>
-        </div>
+        {/* Mobile close button */}
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close navigation"
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white lg:hidden"
+          >
+            <X size={20} />
+          </button>
+        )}
       </div>
 
       {/* Main navigation */}
@@ -51,6 +66,7 @@ export default function Sidebar() {
                 key={label}
                 type="button"
                 aria-current={active ? "page" : undefined}
+                onClick={onClose}
                 className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-[13px] transition-all duration-200 ${
                   active
                     ? "bg-cyan-400/[0.10] font-semibold text-cyan-300 ring-1 ring-inset ring-cyan-400/[0.12]"
@@ -94,6 +110,7 @@ export default function Sidebar() {
               Workspace status
             </span>
           </div>
+
           <p className="text-[11px] leading-relaxed text-slate-500">
             Cloud operations workspace
           </p>
