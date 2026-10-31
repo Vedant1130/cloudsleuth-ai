@@ -8,6 +8,10 @@ import {
   BrainCircuit,
   Plus,
   X,
+  SearchCheck,
+  Clock,
+  AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 
 import {
@@ -29,6 +33,10 @@ import { useEffect, useState } from "react";
 import { formatCurrency } from "../utils/formatCurrency";
 import { getCostOverview } from "../services/costService";
 import { getCloudResources } from "../services/cloudResourceService";
+import {
+  runInvestigation,
+  getInvestigationHistory,
+} from "../services/investigationService";
 
 import ResourceForm from "../components/dashboard/ResourceForm";
 
@@ -328,6 +336,238 @@ function TopCostResources({ resources, loading, error }) {
   );
 }
 
+function InvestigationResults({ investigation }) {
+  if (!investigation) return null;
+
+  const { summary, findings, completedAt } = investigation;
+
+  const severityStyles = {
+    high: "border-rose-400/20 bg-rose-400/10 text-rose-300",
+    medium: "border-amber-400/20 bg-amber-400/10 text-amber-300",
+    low: "border-cyan-400/20 bg-cyan-400/10 text-cyan-300",
+  };
+
+  return (
+    <section className="space-y-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div>
+          <div className="flex items-center gap-2">
+            <SearchCheck className="text-cyan-400" size={21} />
+            <h2 className="font-semibold text-white">
+              Latest Investigation Results
+            </h2>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            Completed {new Date(completedAt).toLocaleString()}
+          </p>
+        </div>
+
+        <span className="w-fit rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs text-emerald-300">
+          Investigation completed
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {[
+          {
+            label: "Resources Scanned",
+            value: summary.totalResources,
+            color: "text-white",
+          },
+          {
+            label: "Total Findings",
+            value: summary.totalFindings,
+            color: "text-cyan-300",
+          },
+          {
+            label: "High Severity",
+            value: summary.high,
+            color: "text-rose-300",
+          },
+          {
+            label: "Medium / Low",
+            value: `${summary.medium} / ${summary.low}`,
+            color: "text-amber-300",
+          },
+        ].map((item) => (
+          <div
+            key={item.label}
+            className="rounded-xl border border-slate-800 bg-slate-950/70 p-4"
+          >
+            <p className="text-xs text-slate-500">{item.label}</p>
+            <p className={`mt-2 text-2xl font-semibold ${item.color}`}>
+              {item.value}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-white">
+          Investigation Findings
+        </h3>
+
+        {findings.length === 0 ? (
+          <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/5 p-5 text-center">
+            <CheckCircle2 size={28} className="mx-auto text-emerald-400" />
+            <p className="mt-2 font-medium text-emerald-300">
+              No issues detected
+            </p>
+            <p className="mt-1 text-sm text-slate-400">
+              No findings were triggered by the current investigation rules.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {findings.map((finding, index) => (
+              <article
+                key={`${finding.resourceId}-${finding.category}-${index}`}
+                className="rounded-xl border border-slate-800 bg-slate-950/60 p-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="font-medium text-white">{finding.title}</h4>
+
+                  <span
+                    className={`rounded-md border px-2 py-1 text-xs font-medium capitalize ${
+                      severityStyles[finding.severity]
+                    }`}
+                  >
+                    {finding.severity}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-sm text-slate-400">
+                  {finding.description}
+                </p>
+
+                <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+                  <span>{finding.resourceName}</span>
+                  <span>·</span>
+                  <span>{finding.provider}</span>
+                  <span>·</span>
+                  <span>{finding.category}</span>
+                </div>
+
+                <div className="mt-3 rounded-lg border border-cyan-400/10 bg-cyan-400/5 p-3">
+                  <p className="text-xs font-semibold text-cyan-300">
+                    Recommended Action
+                  </p>
+                  <p className="mt-1 text-sm text-slate-300">
+                    {finding.recommendation}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function InvestigationHistory({ investigations, onSelect, selectedId }) {
+  const recentInvestigations = investigations.slice(0, 5);
+
+  return (
+    <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+        <div>
+          <div className="flex items-center gap-2">
+            <Clock size={20} className="text-cyan-400" />
+            <h2 className="font-semibold text-white">Investigation History</h2>
+          </div>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Your recent cloud investigations
+          </p>
+        </div>
+
+        <span className="w-fit rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400">
+          {investigations.length} recorded
+        </span>
+      </div>
+
+      {recentInvestigations.length === 0 ? (
+        <div className="mt-5 rounded-xl border border-dashed border-slate-700 p-6 text-center">
+          <Clock size={26} className="mx-auto text-slate-500" />
+
+          <p className="mt-3 font-medium text-slate-300">
+            No investigation history yet
+          </p>
+
+          <p className="mt-1 text-sm text-slate-500">
+            Run your first investigation to see it here.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-5 space-y-3">
+          {recentInvestigations.map((investigation, index) => {
+            const { summary } = investigation;
+
+            const isSelected = selectedId === investigation._id;
+
+            return (
+              <button
+                key={investigation._id}
+                type="button"
+                onClick={() => onSelect(investigation)}
+                className={`w-full rounded-xl border p-4 text-left transition ${
+                  isSelected
+                    ? "border-cyan-400/40 bg-cyan-400/[0.06]"
+                    : "border-slate-800 bg-slate-950/50 hover:border-slate-700"
+                }`}
+              >
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-white">
+                        Investigation #{investigations.length - index}
+                      </span>
+
+                      {isSelected && (
+                        <span className="rounded-md bg-cyan-400/10 px-2 py-0.5 text-[10px] font-medium text-cyan-300">
+                          Selected
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                      <Clock size={13} />
+                      {new Date(investigation.completedAt).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    <span className="text-slate-400">
+                      {summary.totalResources} resources
+                    </span>
+
+                    <span className="text-slate-300">
+                      {summary.totalFindings} findings
+                    </span>
+
+                    <span className="rounded-md bg-rose-400/10 px-2 py-1 text-rose-300">
+                      {summary.high} High
+                    </span>
+
+                    <span className="rounded-md bg-amber-400/10 px-2 py-1 text-amber-300">
+                      {summary.medium} Medium
+                    </span>
+
+                    <span className="rounded-md bg-cyan-400/10 px-2 py-1 text-cyan-300">
+                      {summary.low} Low
+                    </span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function Dashboard() {
   const [costOverview, setCostOverview] = useState(null);
   const [costLoading, setCostLoading] = useState(true);
@@ -340,6 +580,11 @@ export default function Dashboard() {
   const [isMobile, setIsMobile] = useState(
     window.matchMedia("(max-width: 640px)").matches,
   );
+
+  const [isInvestigating, setIsInvestigating] = useState(false);
+  const [investigationError, setInvestigationError] = useState("");
+  const [latestInvestigation, setLatestInvestigation] = useState(null);
+  const [investigationHistory, setInvestigationHistory] = useState([]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 640px)");
@@ -393,9 +638,47 @@ export default function Dashboard() {
     }
   };
 
+  const fetchInvestigationHistory = async () => {
+    try {
+      const response = await getInvestigationHistory();
+
+      if (response.success) {
+        setInvestigationHistory(response.data);
+        setLatestInvestigation(response.data[0] ?? null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch investigation history:", error);
+    }
+  };
+
+  const handleRunInvestigation = async () => {
+    try {
+      setIsInvestigating(true);
+      setInvestigationError("");
+
+      const response = await runInvestigation();
+
+      if (response.success) {
+        setLatestInvestigation(response.data);
+
+        await fetchInvestigationHistory();
+      }
+    } catch (error) {
+      console.error("Investigation failed:", error);
+
+      setInvestigationError(
+        error.response?.data?.message ||
+          "Unable to complete investigation. Please try again.",
+      );
+    } finally {
+      setIsInvestigating(false);
+    }
+  };
+
   useEffect(() => {
     fetchCostOverview();
     fetchCloudResources();
+    fetchInvestigationHistory();
   }, []);
 
   return (
@@ -411,11 +694,37 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300">
-          <Activity size={17} />
-          Run Investigation
+        <button
+          type="button"
+          onClick={handleRunInvestigation}
+          disabled={isInvestigating}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isInvestigating ? (
+            <>
+              <RefreshCw size={17} className="animate-spin" />
+              Investigating...
+            </>
+          ) : (
+            <>
+              <Activity size={17} />
+              Run Investigation
+            </>
+          )}
         </button>
       </section>
+      {investigationError && (
+        <div className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
+          {investigationError}
+        </div>
+      )}
+
+      <InvestigationResults investigation={latestInvestigation} />
+      <InvestigationHistory
+        investigations={investigationHistory}
+        selectedId={latestInvestigation?._id}
+        onSelect={setLatestInvestigation}
+      />
 
       <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {metrics.map((metric) => (
