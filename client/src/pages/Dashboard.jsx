@@ -39,6 +39,7 @@ import {
 } from "../services/investigationService";
 
 import ResourceForm from "../components/dashboard/ResourceForm";
+import AIInsights from "../components/dashboard/AIInsights";
 
 const metrics = [
   {
@@ -339,8 +340,7 @@ function TopCostResources({ resources, loading, error }) {
 function InvestigationResults({ investigation }) {
   if (!investigation) return null;
 
-  const { summary, findings, completedAt } = investigation;
-
+  const { summary, findings, completedAt, aiAnalysis } = investigation;
   const severityStyles = {
     high: "border-rose-400/20 bg-rose-400/10 text-rose-300",
     medium: "border-amber-400/20 bg-amber-400/10 text-amber-300",
@@ -401,6 +401,8 @@ function InvestigationResults({ investigation }) {
           </div>
         ))}
       </div>
+
+      <AIInsights aiAnalysis={aiAnalysis} />
 
       <div>
         <h3 className="mb-3 text-sm font-semibold text-white">
