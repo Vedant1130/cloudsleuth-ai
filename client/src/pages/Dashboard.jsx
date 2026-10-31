@@ -122,7 +122,7 @@ function MetricCard({ metric, costOverview, costLoading, costError }) {
   const TrendIcon = metric.positive ? ArrowDownRight : ArrowUpRight;
 
   return (
-    <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
+    <article className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-3.5 transition-colors hover:border-slate-700 sm:p-5">
       <div className="flex items-start justify-between">
         <p className="text-sm text-slate-400">{metric.label}</p>
         <div className={`rounded-xl p-2 ${colorClasses[metric.color]}`}>
@@ -130,7 +130,7 @@ function MetricCard({ metric, costOverview, costLoading, costError }) {
         </div>
       </div>
 
-      <p className="mt-5 text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+      <p className="mt-4 break-words text-xl font-semibold tracking-tight text-white sm:mt-5 sm:text-3xl">
         {metric.type === "cloudSpend"
           ? costLoading
             ? "Loading..."
@@ -146,7 +146,7 @@ function MetricCard({ metric, costOverview, costLoading, costError }) {
             : metric.value}
       </p>
 
-      <div className="mt-3 flex items-center gap-1.5 text-xs">
+      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] sm:mt-3 sm:text-xs">
         <TrendIcon
           size={15}
           className={metric.positive ? "text-emerald-400" : "text-rose-400"}
@@ -337,6 +337,23 @@ export default function Dashboard() {
   const [resourcesLoading, setResourcesLoading] = useState(true);
   const [resourcesError, setResourcesError] = useState("");
   const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(
+    window.matchMedia("(max-width: 640px)").matches,
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 640px)");
+
+    const handleChange = (event) => {
+      setIsMobile(event.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener("change", handleChange);
+    };
+  }, []);
 
   const fetchCostOverview = async () => {
     try {
@@ -400,7 +417,7 @@ export default function Dashboard() {
         </button>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         {metrics.map((metric) => (
           <MetricCard
             key={metric.label}
@@ -451,7 +468,12 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={analyticsData}
-                margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                margin={{
+                  top: 10,
+                  right: isMobile ? 0 : 10,
+                  left: isMobile ? -10 : 0,
+                  bottom: 0,
+                }}
               >
                 <defs>
                   <linearGradient
@@ -477,6 +499,8 @@ export default function Dashboard() {
                   stroke="#64748b"
                   tickLine={false}
                   axisLine={false}
+                  tick={{ fontSize: isMobile ? 11 : 13 }}
+                  tickMargin={8}
                 />
 
                 <YAxis
@@ -484,7 +508,15 @@ export default function Dashboard() {
                   stroke="#64748b"
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => formatCurrency(value)}
+                  width={isMobile ? 58 : 75}
+                  tick={{ fontSize: isMobile ? 10 : 13 }}
+                  tickFormatter={(value) =>
+                    isMobile
+                      ? `₹${Number(value).toLocaleString("en-IN", {
+                          maximumFractionDigits: 0,
+                        })}`
+                      : formatCurrency(value)
+                  }
                 />
 
                 <YAxis
@@ -493,6 +525,8 @@ export default function Dashboard() {
                   stroke="#64748b"
                   tickLine={false}
                   axisLine={false}
+                  width={isMobile ? 24 : 35}
+                  tick={{ fontSize: isMobile ? 11 : 13 }}
                   allowDecimals={false}
                 />
 
@@ -507,10 +541,17 @@ export default function Dashboard() {
                     border: "1px solid #334155",
                     borderRadius: "12px",
                     color: "#f8fafc",
+                    fontSize: isMobile ? "12px" : "14px",
                   }}
                 />
 
-                <Legend />
+                <Legend
+                  iconSize={isMobile ? 8 : 10}
+                  wrapperStyle={{
+                    fontSize: isMobile ? "11px" : "14px",
+                    paddingTop: isMobile ? "8px" : "12px",
+                  }}
+                />
 
                 <Area
                   yAxisId="spend"
