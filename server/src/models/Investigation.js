@@ -1,3 +1,4 @@
+
 import mongoose from "mongoose";
 
 const findingSchema = new mongoose.Schema(
@@ -39,6 +40,28 @@ const findingSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const aiAnalysisSchema = new mongoose.Schema(
+  {
+    overview: {
+      type: String,
+      required: true,
+    },
+    key_insights: {
+      type: [String],
+      default: [],
+    },
+    prioritized_actions: {
+      type: [String],
+      default: [],
+    },
+    risk_assessment: {
+      type: String,
+      required: true,
+    },
+  },
+  { _id: false },
+);
+
 const investigationSchema = new mongoose.Schema(
   {
     summary: {
@@ -63,10 +86,17 @@ const investigationSchema = new mongoose.Schema(
         default: 0,
       },
     },
+
     findings: {
       type: [findingSchema],
       default: [],
     },
+
+    aiAnalysis: {
+      type: aiAnalysisSchema,
+      default: null,
+    },
+
     completedAt: {
       type: Date,
       default: Date.now,
